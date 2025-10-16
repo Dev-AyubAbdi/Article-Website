@@ -129,61 +129,82 @@ export const Header = () => {
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                 className="inline-flex items-center justify-center p-2 rounded-md text-gray-400"
               >
-                {isMenuOpen ? <CiMenuBurger className="block w-6 h-6" /> : <IoMdClose className="block w-6 h-6" />}
+                {isMenuOpen ? (
+                  <CiMenuBurger className="block w-6 h-6" />
+                ) : (
+                  <IoMdClose className="block w-6 h-6" />
+                )}
               </button>
             </div>
           </div>
         </div>
       </div>
       {/* menu menu */}
-      {
-        isMenuOpen && (
-      <div className="sm:hidden">
-        <div className="pt-2 pb-3 space-y-1">
-             <Link
-                to="/"
-                className="block pl-3 pr-4 py-2  items-center px-1 pt-1 border-l-2 border-orange-500 text-base font-medium text-gray-900 text-orange-700 bg-orange-50"
-              >
-                Home
-              </Link>
-              <Link
-                to="/articles"
-                className=" block pl-3 pr-4 py-2 px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-600 focus:bg-gray-50 hover:border-gray-300 hover:text-gray-800"
-              >
-                Articles
-              </Link>
-        </div>
-      </div>
-        )
-    }
-    {
+      {isMenuOpen && (
+        <div className="sm:hidden py-4">
+          <div className="pt-2 pb-3 space-y-1">
+            <Link
+              to="/"
+              className="block pl-3 pr-4 py-2  items-center px-1 pt-1 border-l-2 border-orange-500 text-base font-medium text-gray-900 text-orange-700 bg-orange-50"
+            >
+              Home
+            </Link>
+            <Link
+              to="/articles"
+              className=" block pl-3 pr-4 py-2 px-1 pt-1 border-b-2 border-transparent text-base font-medium text-gray-600 focus:bg-gray-50 hover:border-gray-300 hover:text-gray-800"
+            >
+              Articles
+            </Link>
+          </div>
+          {/* Is Logged in */}
+           {
         isLoggedIn && (
              <div>
              <Link
                 to="/articles"
-                className=" block pl-3 pr-4 py-2 px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-600 focus:bg-gray-50 hover:border-gray-300 hover:text-gray-800"
+                className=" block pl-3 pr-4 py-2 px-1 pt-1 border-b-2 border-transparent text-base font-medium text-gray-600 focus:bg-gray-50 hover:border-gray-300 hover:text-gray-800"
               >
                 Write
               </Link>
                <Link
                 to="/articles"
-                className=" block pl-3 pr-4 py-2 px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800"
+                className=" block pl-3 pr-4 py-2 px-1 pt-1 border-b-2 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800"
               >
                My Articles
               </Link>
                <Link
                 to="/articles"
-                className=" block pl-3 pr-4 py-2 px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800"
+                className=" block pl-3 pr-4 py-2 px-1 pt-1 border-b-2 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800"
               >
                 My profile
               </Link>
-              <button className="block w-full text-left pl-3 pr-4 py-2 border-l-4 border-transparent text-sm font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800">
+              <button className="block w-full text-left pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800">
                 Sign out
               </button>
           </div> 
         )
     }
-    
+    {/* if is not  logged in */}
+    {
+      !isLoggedIn && (
+        <>
+        <Link
+                to="/articles"
+                className=" block pl-3 pr-4 py-2 px-1 pt-1 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800"
+              >
+                Sign In
+              </Link>
+              <Link
+                to="/articles"
+                className=" block pl-3 pr-4 py-2 px-1 pt-1 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800"
+              >
+                Sing Up
+              </Link>
+        </>
+      )
+    }
+        </div>
+      )}
     </header>
   );
 };
