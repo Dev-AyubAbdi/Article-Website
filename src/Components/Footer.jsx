@@ -1,4 +1,5 @@
 import { Link } from "react-router";
+import { FiTwitter, FiInstagram, FiGithub } from 'react-icons/fi'
 export const Footer = () => {
   return (
     <div className="bg-white">
@@ -35,6 +36,25 @@ export const Footer = () => {
                  
           </nav>
           {/* social media links */}
+          <div className="mt-8 flex justify-center space-x-6">
+          <a href="#" className="text-gray-400 hover:text-gray-500">
+            <span className="sr-only">Twitter</span>
+            <FiTwitter className="h-6 w-6" />
+          </a>
+          <a href="#" className="text-gray-400 hover:text-gray-500">
+            <span className="sr-only">Instagram</span>
+            <FiInstagram className="h-6 w-6" />
+          </a>
+          <a href="#" className="text-gray-400 hover:text-gray-500">
+            <span className="sr-only">GitHub</span>
+            <FiGithub className="h-6 w-6" />
+          </a>
+        </div>
+
+         <p className="mt-8 text-center text-base text-gray-400">
+          &copy;{new Date().getFullYear()} Blogify. All rights reserved.
+        </p>
+
         </div>
     </div>
   )
