@@ -1,25 +1,62 @@
 import { useState } from "react";
 import { Link } from "react-router";
+import { signUp } from "../lib/auth";
 
 export const SignUpPage = () => {
-  const [email, setEmail] = useState('');
-  const [username, setUserName] = useState('')
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState(null)
-  const [success, setSuccess] = useState(false)
+  const [email, setEmail] = useState("");
+  const [username, setUserName] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(false);
+
+  const handleSubmit = async(event) => {
+    event.preventDefault();
+    setIsLoading(true);
+    setError(null);
+
+    if (password !== confirmPassword) {
+      setError("password do not match");
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      await signUp( email, password, username )
+      setSuccess(true)
+
+    }catch(error) {
+      console.error(error)
+      setError(error.message || "Failed to create Account. Please try again")
+    }finally {
+      setIsLoading(false)
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="max-w-md w-full">
         <div className="text-center mb-10">
           <h1 className="text-3xl font-bold">Create an Account </h1>
-          <p className="text-gray-600 mt-2">Join our community and start sharing your ideas</p>
+          <p className="text-gray-600 mt-2">
+            Join our community and start sharing your ideas
+          </p>
         </div>
+
         <div className="bg-white rounded-lg shadow-md p-8">
-          <form>
+          {error && (
+            <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md text-sm">
+              {error} 
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit}>
             <div className="mb-6">
-              <label className="block text-gray-700 text-sm font-semibold mb-2" htmlFor="email">
+              <label
+                className="block text-gray-700 text-sm font-semibold mb-2"
+                htmlFor="email"
+              >
                 Email Address
               </label>
               <input
@@ -32,8 +69,11 @@ export const SignUpPage = () => {
                 required
               />
             </div>
-             <div className="mb-6">
-              <label className="block text-gray-700 text-sm font-semibold mb-2" htmlFor="username">
+            <div className="mb-6">
+              <label
+                className="block text-gray-700 text-sm font-semibold mb-2"
+                htmlFor="username"
+              >
                 Username
               </label>
               <input
@@ -47,7 +87,10 @@ export const SignUpPage = () => {
               />
             </div>
             <div className="mb-6">
-              <label className="block text-gray-700 text-sm font-semibold mb-2" htmlFor="password">
+              <label
+                className="block text-gray-700 text-sm font-semibold mb-2"
+                htmlFor="password"
+              >
                 Password
               </label>
               <input
@@ -60,10 +103,15 @@ export const SignUpPage = () => {
                 required
                 minLength={6}
               />
-              <p className="text-xs text-gray-500 mt-1">Must be at least 6 characters</p>
+              <p className="text-xs text-gray-500 mt-1">
+                Must be at least 6 characters
+              </p>
             </div>
-             <div className="mb-6">
-              <label className="block text-gray-700 text-sm font-semibold mb-2" htmlFor="confirmPassword">
+            <div className="mb-6">
+              <label
+                className="block text-gray-700 text-sm font-semibold mb-2"
+                htmlFor="confirmPassword"
+              >
                 Confirm Password
               </label>
               <input
@@ -76,19 +124,21 @@ export const SignUpPage = () => {
                 required
               />
             </div>
-             <button
+            <button
               type="submit"
-              className="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-opacity-50 transition duration-200 disabled:cursor-not-allowed disabled:bg-orange-500"
+              className="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-opacity-50 transition duration-200 disabled:cursor-not-allowed disabled:bg-orange-700"
               disabled={isLoading}
             >
-              {isLoading ? 'Creating Account...' : 'Create Account'}
-
+              {isLoading ? "Creating Account..." : "Create Account"}
             </button>
           </form>
-           <div className="text-center mt-6">
+          <div className="text-center mt-6">
             <p className="text-gray-600 text-sm">
-              Already have an account?{' '}
-              <Link to="/signin" className="text-orange-600 hover:text-orange-800 font-semibold">
+              Already have an account?{" "}
+              <Link
+                to="/signin"
+                className="text-orange-600 hover:text-orange-800 font-semibold"
+              >
                 Sign in
               </Link>
             </p>
