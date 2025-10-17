@@ -5,5 +5,35 @@ export async function signUp(email, password, username = "") {
     email: email,
     password: password,
   });
-  console.log(data);
+
+  if (data?.user) {
+    const { data: sessionData } = await supabase.auth.getSession();
+
+    if (!sessionData?.session) {
+      console.log("no active session yet - profile will be created on first sing in  ")
+      return data;
+    }
+  
+
+  const displayName = username || email.split("@")[0];
+
+  // create profile
+
+  const { data: profileData, error: profileError } = await supabase
+    .from("users")
+    .insert({
+      id: data.user.id,
+      username: displayName,
+      avatar_Url: null,
+    })
+    .select()
+    .single();
+
+  if (profileError) {
+    console.error("profile creation error", profileError);
+  } else {
+    console.error("profile created Succesfully", profileData);
+  }
+}
+  return data
 }

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { signUp } from "../lib/auth";
 
 export const SignUpPage = () => {
@@ -10,6 +10,8 @@ export const SignUpPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
+
+  const Navigate = useNavigate()
 
   const handleSubmit = async(event) => {
     event.preventDefault();
@@ -26,6 +28,10 @@ export const SignUpPage = () => {
       await signUp( email, password, username )
       setSuccess(true)
 
+      setTimeout(() => {
+        Navigate("/signin")
+      }, 3000);
+
     }catch(error) {
       console.error(error)
       setError(error.message || "Failed to create Account. Please try again")
@@ -33,6 +39,26 @@ export const SignUpPage = () => {
       setIsLoading(false)
     }
   };
+   if (success) {
+
+
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+        <div className="max-w-md w-full text-center">
+          <div className="bg-white rounded-lg shadow-md p-8">
+            <div className="text-green-500 text-5xl mb-4">✓</div>
+            <h2 className="text-2xl font-bold mb-2">Account Created!</h2>
+            <p className="text-gray-600 mb-4">
+              Your account has been created successfully. Please check your email for verification.
+            </p>
+            <p className="text-gray-500 text-sm">
+              Redirecting to sign in page in a few seconds...
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
