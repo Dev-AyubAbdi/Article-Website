@@ -1,155 +1,137 @@
 import supabase from "./supabase";
 
+export async function signUp(email, password, username = "") {
+  let { data, error } = await supabase.auth.signUp({
+    email: email,
+    password: password,
+  });
 
+  console.log("Auth signup successful:", data);
 
-export async function signUp(email, password, username="") {
-    
+  if (data?.user) {
+    const { data: sessionData } = await supabase.auth.getSession();
 
-    let { data, error } = await supabase.auth.signUp({
-        email: email,
-        password: password
-      })
+    if (!sessionData?.session) {
+      console.log(
+        "No active session yet - profile will be created on first sign in"
+      );
+      return data;
+    }
 
-      console.log('Auth signup successful:', data)
-
-      if(data?.user) {
-        const { data : sessionData } = await supabase.auth.getSession()
-
-        if(!sessionData?.session) {
-            console.log('No active session yet - profile will be created on first sign in')
-            return data;
-        }
-    
-     
-      const displayName = username || email.split("@")[0];
+    const displayName = username || email.split("@")[0];
 
     //   create profile
 
-    const {data: profileData, error : profileError } = await supabase
-    
-        .from('users')
-        .insert({
-            id: data.user.id,
-            username: displayName,
-            avatar_url: null
-        })
-        .select()
-        .single()
+    const { data: profileData, error: profileError } = await supabase
 
-        if(profileError){
-            console.error("profile creation error:", profileError)
-        }else{
-            console.log("Profile created successfully", profileData)
-        }
+      .from("users")
+      .insert({
+        id: data.user.id,
+        username: displayName,
+        avatar_url: null,
+      })
+      .select()
+      .single();
 
+    if (profileError) {
+      console.error("profile creation error:", profileError);
+    } else {
+      console.log("Profile created successfully", profileData);
     }
+  }
 
-    return data
-
-
-
+  return data;
 }
 
 export async function signIn(email, password) {
+  let { data, error } = await supabase.auth.signInWithPassword({
+    email: email,
+    password: password,
+  });
 
-    let { data, error } = await supabase.auth.signInWithPassword({
-        email: email,
-        password: password
-      })
+  console.log("user info ", data);
 
-      console.log("user info ", data)
+  if (error) throw error;
 
-      if(error) throw error
+  //   check if user profile exists , create if it doesn't
 
-    //   check if user profile exists , create if it doesn't
-
-    if(data?.user){
-        try{
-            const profile = await getUserProfile(data.user.id);
-            console.log("profile info ", profile)
-        }catch(profileError){
-            console.error('Error with profile during signin:', profileError)
-        }
+  if (data?.user) {
+    try {
+      const profile = await getUserProfile(data.user.id);
+      console.log("profile info ", profile);
+    } catch (profileError) {
+      console.error("Error with profile during signin:", profileError);
     }
+  }
 }
 
+export async function getUserProfile(userId) {
+  const { data: sessionData } = await supabase.auth.getSession();
 
-export async  function getUserProfile(userId) {
+  const { data, error } = await supabase
+    .from("users")
+    .select("*")
+    .eq("id", userId)
+    .single();
 
+  // if user doest exist , create new one
 
-    const { data : sessionData } = await supabase.auth.getSession()
+  if (error && error.code === "PGRST116") {
+    console.log("No profile found, attempting to create one for user:", userId);
 
-    const { data , error } = await supabase.from('users')
-        .select("*")
-        .eq("id", userId)
-        .single()
+    // get user email to drive username if needed
 
-        // if user doest exist , create new one 
+    const { data: userData } = await supabase.auth.getUser();
 
-        if(error && error.code === "PGRST116"){
-            console.log('No profile found, attempting to create one for user:', userId)
+    console.log("true data", userData);
 
-            
-
-        // get user email to drive username if needed
-
-        const { data : userData } = await supabase.auth.getUser();
-
-        console.log("true data", userData)
-
-        const email = userData?.user.email;
-
-      
-        // mchamuuda @ gmail.com
-
-        const defaultUsername = email ? email.split("@")[0] : `user_${Date.now()}`;
+    const email = userData?.user.email;
 
 
-        // create profile 
 
-        const { data: newProfile, error : profileError } = await supabase
-    
-        .from('users')
-        .insert({
-            id: userId,
-            username: defaultUsername,
-            avatar_url: null
-        })
-        .select()
-        .single()
+    const defaultUsername = email ? email.split("@")[0] : `user_${Date.now()}`;
 
-        if(profileError){
-            console.error("profile creation error:", profileError)
-            throw profileError
-        }else{
-            console.log("Profile created successfully", newProfile)
-        }
+    // create profile
 
-        return newProfile
-        }
+    const { data: newProfile, error: profileError } = await supabase
 
+      .from("users")
+      .insert({
+        id: userId,
+        username: defaultUsername,
+        avatar_url: null,
+      })
+      .select()
+      .single();
 
-        // general error 
-        if(error){
-            console.error('Error fetching profile:', error)
-            throw error
-        }
+    if (profileError) {
+      console.error("profile creation error:", profileError);
+      throw profileError;
+    } else {
+      console.log("Profile created successfully", newProfile);
+    }
 
-        console.log("exiting profile")
+    return newProfile;
+  }
 
-        return data
+  // general error
+  if (error) {
+    console.error("Error fetching profile:", error);
+    throw error;
+  }
+
+  console.log("exiting profile");
+
+  return data;
 }
 
-export function onAuthChange(callback){
+export function onAuthChange(callback) {
+  const { data } = supabase.auth.onAuthStateChange((event, session) => {
+    callback(session?.user || null, event);
+  });
 
-    const { data } = supabase.auth.onAuthStateChange((event, session) => {
-            callback(session?.user || null, event)
-    })
-
-    return () => data.subscription.unsubscribe();
+  return () => data.subscription.unsubscribe();
 }
-
-
 
 /**
  * Sign out the current user
@@ -157,4 +139,3 @@ export function onAuthChange(callback){
 // export async function signOut() {
 //     await supabase.auth.signOut()
 //   }
-  
