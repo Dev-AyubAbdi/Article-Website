@@ -9,6 +9,11 @@ import { Header } from "./Components/Header";
 import { Footer } from "./Components/Footer";
 import { AuthProvider } from "./Context/AuthContext";
 import UnAuthenticatedRoute from "./Components/UnAuthenticatedRoute";
+import {ArticleEditorPage}   from "./Pages/ArticleEditorPage";
+import {ManageArticlePage}  from "./Pages/ManageArticlePage";
+import {ProfilePage}  from "./Pages/ProfilePage";
+import ProtectedRoute from "./Components/ProtectedRoute"
+
 
 function App() {
   return (
@@ -39,6 +44,33 @@ function App() {
                 </UnAuthenticatedRoute>
               }
             />
+
+            {/* Protected Routes */}
+
+            <Route path="/editor" element={
+              <ProtectedRoute>
+                <ArticleEditorPage/>
+              </ProtectedRoute>
+              
+              } /> 
+            <Route path="editor/:id" element={ 
+              <ProtectedRoute>
+                  <ArticleEditorPage/>
+              </ProtectedRoute>
+            
+              } /> 
+            <Route path="/manageArticle" element={
+              <ProtectedRoute>
+                 <ManageArticlePage/>
+              </ProtectedRoute>
+             
+              } /> 
+            <Route path="/ProfilePage" element={
+              <ProtectedRoute>
+                 <ProfilePage/>
+              </ProtectedRoute>
+             
+              } /> 
           </Routes>
         </main>
         {/* footer */}

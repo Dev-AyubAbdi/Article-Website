@@ -10,6 +10,7 @@ export function AuthProvider({ children }) {
   const [profile, setProfile] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
+
   useEffect(() => {
     const cleanup = onAuthChange(async (user) => {
       setUser(user);
@@ -33,7 +34,7 @@ export function AuthProvider({ children }) {
     user,
     profile,
     setIsLoading,
-    isLoggedIn: !!user,
+    isLoggedIn: !!user
   };
 
   return (

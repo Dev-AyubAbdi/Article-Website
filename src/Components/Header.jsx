@@ -3,14 +3,16 @@ import { Link } from "react-router";
 import { CgProfile } from "react-icons/cg";
 import { CiMenuBurger } from "react-icons/ci";
 import { IoMdClose } from "react-icons/io";
+import { useAuth } from "../Context/AuthContext";
 
 export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDropDownOpen, setIsDropDownOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const {isLoggedIn, profile} = useAuth()
+    
+  const avatorUrl = ""
+    // "https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTR8fHByb2ZpbGV8ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&q=60&w=500";
 
-  const avatorUrl =
-    "https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTR8fHByb2ZpbGV8ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&q=60&w=500";
   return (
     <header className="bg-white shadow">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -64,7 +66,7 @@ export const Header = () => {
             {isLoggedIn ? (
               <>
                 <div className="text-sm text-gray-700">
-                  <span>hello, Ayub</span>
+                  <span>hello, Ayub Abdi { profile?.session?.user?.email.splite("@")[0]}</span>
                 </div>
                 <div className="relative">
                   <button
