@@ -46,10 +46,10 @@ export async function signUp(email, password, username = "") {
 export async function signIn(email, password) {
   let { data, error } = await supabase.auth.signInWithPassword({
     email: email,
-    password: password,
+    password: password
   });
 
-  console.log("user info ", data);
+  console.log("user info ",data);
 
   if (error) throw error;
 
@@ -68,8 +68,7 @@ export async function signIn(email, password) {
 export async function getUserProfile(userId) {
   const { data: sessionData } = await supabase.auth.getSession();
 
-  const { data, error } = await supabase
-    .from("users")
+  const { data, error } = await supabase.from("users")
     .select("*")
     .eq("id", userId)
     .single();
@@ -133,9 +132,8 @@ export function onAuthChange(callback) {
   return () => data.subscription.unsubscribe();
 }
 
-/**
- * Sign out the current user
- */
-// export async function signOut() {
-//     await supabase.auth.signOut()
-//   }
+
+// sign out current user
+export async function signOut() {
+  await supabase.auth.signOut()
+}
