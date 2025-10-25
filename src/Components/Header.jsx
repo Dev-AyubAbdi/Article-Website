@@ -14,7 +14,6 @@ export const Header = () => {
   // console.log("you're profile", profile);
     
   const avatorUrl = ""
-    // "https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTR8fHByb2ZpbGV8ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&q=60&w=500";
 
   return (
     <header className="bg-white shadow">
@@ -43,7 +42,10 @@ export const Header = () => {
               >
                 Articles
               </Link>
-              <Link
+             {
+              isLoggedIn && (
+                <>
+                 <Link
                 to="/"
                 className="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-base font-medium text-gray-900"
               >
@@ -53,14 +55,17 @@ export const Header = () => {
                 to="/"
                 className="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-base font-medium text-gray-900"
               >
-                Write
+                Articles
               </Link>
               <Link
                 to="/"
                 className="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-base font-medium text-gray-900"
               >
-                Write
+                My Articles
               </Link>
+                </>
+              )
+             }
             </nav>
           </div>
           {/* Right */}
