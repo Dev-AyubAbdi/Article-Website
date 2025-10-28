@@ -2,6 +2,10 @@ import { useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { FiInfo, FiSave, FiTag, FiX } from "react-icons/fi";
 import { QuillEditor } from "../Components/QuillEditor";
+import { useAuth } from "../Context/AuthContext";
+import { useNavigate } from "react-router";
+import { uploadImage } from "../lib/storage";
+import { createArticle } from "../lib/articles";
 
 // Available tags - In a real app, fetch from Supabase
 const AVAILABLE_TAGS = [
@@ -39,6 +43,10 @@ export const ArticleEditorPage = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [imagePath, setImagePath] = useState("");
 
+  const { user } = useAuth();
+
+  const Navigate = useNavigate();
+
   const fileInputRef = useRef(null);
   const editorRef = useRef(null);
 
@@ -50,6 +58,199 @@ export const ArticleEditorPage = () => {
 
   const handleContentChange = (value) => {
     setContent(value);
+  };
+
+  const handleImageSelect = (e) => {
+    const file = e.target.files[0];
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file");
+
+      e.target.value = "";
+      setSelectedImage(null);
+      return;
+    }
+
+    const maxSize = 2 * 1024 * 1024;
+
+    if (file.size > maxSize) {
+      toast.error(
+        `image size (${(file.size / 1024 / 1024).toFixed(
+          2
+        )}MB) exceed the 2MB limit`
+      );
+      e.target.value = "";
+      setSelectedImage(null);
+      return;
+    }
+
+    setSelectedImage(file);
+    toast.success(`Select file : ${file.name}`);
+  };
+
+  const handleUploadImage = async () => {
+    if (!selectedImage) {
+      toast.error("please select an Image");
+      return;
+    }
+
+    if (!user) {
+      toast.error("you must be signed in to upload image");
+      Navigate("/singin");
+      return;
+    }
+    setIsUploading(true);
+
+    try {
+      const { path, url } = await uploadImage(selectedImage, user.id);
+
+      console.log("image uploaded successfully", { path, url });
+      setFeaturedImageUrl(url);
+      setImagePath(path);
+
+      setSelectedImage(null);
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+      toast.success("Image uploaded successfully");
+      console.log("Image state after upload:", {
+        featuredImageUrl: url,
+        imagePath: path,
+      });
+      return { path, url };
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      toast.error(
+        `Failed to upload image: ${error.message || "Unknown error"}`
+      );
+      throw error;
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleSave = async (publishStatus = null) => {
+    if (!title.trim()) {
+      toast.error("Please add a title your article");
+      return;
+    }
+
+    if (!content || content === "<p><br/></p>") {
+      toast.error("please someone add your article");
+      return;
+    }
+
+    if (!user) {
+      toast.error("you must singin in to save an  article");
+      Navigate = "/singin";
+      return;
+    }
+
+    let uploadedImageData = null;
+
+    // Check if there's a selected image that hasn't been uploaded yet
+
+    if (selectedImage) {
+      console.log("Selected image needs to be uploaded first:", selectedImage);
+      const shouldUpload = confirm(
+        "You have a selected image that hasn't been uploaded yet. Would you like to upload it now?"
+      );
+
+      if (shouldUpload) {
+        try {
+          uploadedImageData = await handleUploadImage();
+          console.log("Image uploaded during save:", uploadedImageData);
+
+          // Wait a moment for state to update
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        } catch (error) {
+          console.error("Failed to upload image during save:", error);
+          toast.error(
+            "Failed to upload image. Please try uploading the image first."
+          );
+          return;
+        }
+      } else {
+        // If user doesn't want to upload the image, ask if they want to proceed without it
+        const shouldProceed = confirm(
+          "Do you want to proceed without uploading the image?"
+        );
+        if (!shouldProceed) {
+          return;
+        }
+        // Clear the selected image since user chose not to upload
+        setSelectedImage(null);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
+      }
+    }
+    setIsSaving(true);
+
+    console.log("Starting article save with state:", {
+      isEditMode,
+      featuredImageUrl,
+      imagePath,
+      selectedImage,
+      uploadedImageData,
+    });
+
+     try {
+
+
+            // Determine if we should update the publish status
+            const published = publishStatus !== null ? publishStatus : isPublished
+
+            // Get the current image state, preferring newly uploaded image if available
+            const currentImageUrl = uploadedImageData?.url || featuredImageUrl
+            const currentImagePath = uploadedImageData?.path || imagePath
+
+
+            console.log('Current image state:', {
+                featuredImageUrl: currentImageUrl,
+                imagePath: currentImagePath,
+                selectedImage,
+                uploadedImageData
+            })
+
+            // featured_image   
+
+            const articleData = {
+                title,
+                content,
+                tags: selectedTags,
+                authorId: user.id,
+                published,
+               featured_imageUrl: currentImageUrl
+            }
+
+            console.log('Saving article with data:', articleData);
+
+            let savedArticle;
+
+
+            // update 
+
+            if (isEditMode) {
+                // update functions
+                savedArticle = await updateArticle(id, articleData)
+            } else {
+                // insert || create new article
+                savedArticle = await createArticle(articleData)
+            }
+
+
+            console.log('Article saved successfully:', savedArticle)
+
+            toast.success(`Article ${isEditMode ? 'updated' : 'created'} successfully!`)
+
+        } catch (error) {
+            console.error('Error saving article:', error)
+            toast.error('Failed to save your article. Please try again later.')
+        } finally {
+            setIsSaving(false)
+        }
   };
 
   return (
@@ -112,7 +313,7 @@ export const ArticleEditorPage = () => {
               type="file"
               id="featured-image"
               accept="image/*"
-              // onChange={handleImageSelect}
+              onChange={handleImageSelect}
               ref={fileInputRef}
               className="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100"
             />
@@ -121,6 +322,14 @@ export const ArticleEditorPage = () => {
               <button
                 type="button"
                 disabled={isUploading}
+                onClick={async () => {
+                  try {
+                    await handleUploadImage();
+                  } catch (error) {
+                    console.error("Failed Uploaded Image:", error);
+                    toast.error("Failed to Upload Image. Please try Again");
+                  }
+                }}
                 className="px-3 py-2 bg-orange-500 text-white rounded text-sm hover:bg-orange-600 disabled:opacity-50 cursor-pointer"
               >
                 {isUploading ? "Uploading..." : "Upload"}
@@ -234,25 +443,18 @@ export const ArticleEditorPage = () => {
           />
         </div>
       </div>
-       <div className="px-6 py-4 md:px-10 flex justify-end space-x-4">
-                <button
-                  
+      <div className="px-6 py-4 md:px-10 flex justify-end space-x-4">
+        <button className="px-6 py-3 border border-gray-300 rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
+          Save as Draft
+        </button>
 
-                    className="px-6 py-3 border border-gray-300 rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                >
-                  Save as Draft
-                </button>
-
-                <button
-                 
-                    className="px-6 py-3 border border-transparent rounded-md shadow-sm text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                >
-                   Save and Publish
-                </button>
-            </div>
-
-
-        
+        <button
+          onClick={() => handleSave(true)}
+          className="px-6 py-3 border border-transparent rounded-md shadow-sm text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+        >
+          Save and Publish
+        </button>
+      </div>
     </div>
   );
 };

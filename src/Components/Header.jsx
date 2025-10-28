@@ -46,7 +46,7 @@ export const Header = () => {
               isLoggedIn && (
                 <>
                  <Link
-                to="/"
+                to="/editor"
                 className="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-base font-medium text-gray-900"
               >
                 Write
@@ -58,7 +58,7 @@ export const Header = () => {
                 Articles
               </Link>
               <Link
-                to="/"
+                to="/manageArticle"
                 className="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-base font-medium text-gray-900"
               >
                 My Articles

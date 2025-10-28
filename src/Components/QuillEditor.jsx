@@ -1,16 +1,21 @@
-import React, { forwardRef, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import ReactQuill from "react-quill-new";
 import './quill.snow.css'
 
-export const QuillEditor = forwardRef(
-  ({ value, onChange, placeholder, classname, height = 400 }, ref) => {
+export const QuillEditor = 
+  ({ value, onChange, placeholder, classname, height = 400 },) => {
 
     const quillRef = useRef()
     const [editorValue, setEditorValue] = useState(value || "")
 
-    const handleChange = () => {
+    const handleChange = useCallback ((value) => {
 
-    }
+        setEditorValue(value)
+        onChange(value)
+
+    },[onChange])
+
+    
        const modules = {
         toolbar: [
             ['bold', 'italic', 'underline', 'strike'],
@@ -52,4 +57,4 @@ export const QuillEditor = forwardRef(
         </div>
     )
   }
-);
+
