@@ -1,11 +1,11 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { FiInfo, FiSave, FiTag, FiX } from "react-icons/fi";
 import { QuillEditor } from "../Components/QuillEditor";
 import { useAuth } from "../Context/AuthContext";
-import { useNavigate } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import { uploadImage } from "../lib/storage";
-import { createArticle } from "../lib/articles";
+import { createArticle, getArticleById, updateArticle } from "../lib/articles";
 
 // Available tags - In a real app, fetch from Supabase
 const AVAILABLE_TAGS = [
@@ -26,7 +26,8 @@ const AVAILABLE_TAGS = [
   "Future Tech",
 ];
 export const ArticleEditorPage = () => {
-  const isEditMode = false;
+  const { id } = useParams();
+  const isEditMode = Boolean(id);
 
   // State for article data
   const [title, setTitle] = useState("");
@@ -49,6 +50,54 @@ export const ArticleEditorPage = () => {
 
   const fileInputRef = useRef(null);
   const editorRef = useRef(null);
+
+  useEffect(() => {
+    if (isEditMode) {
+      const fetchArticle = async () => {
+        try {
+          const article = await getArticleById(id);
+
+          console.log("article info", article);
+
+          if (!article) {
+            setError("Article not found");
+            return;
+          }
+          // check if teh user is the author
+          if (article.author_id !== user?.id) {
+            setError("You do not have permission to edit this article");
+            return;
+          }
+          setTitle(article.title);
+          setContent(article.content);
+          setSelectedTags(article.tags);
+
+          // Handle featured image loading with explicit error handling
+          if (article.featured_image) {
+            console.log(
+              "Loading existing featured image:",
+              article.featured_image
+            );
+            // Simply set the URL directly without the fetch check
+            setFeaturedImageUrl(article.featured_image);
+          } else {
+            setFeaturedImageUrl("");
+          }
+
+          // setImagePath(ar)
+
+          setIsPublished(article.published || false);
+
+          // setImagePath(ar)
+        } catch (error) {
+          console.error("Error fetching article:", err);
+          setError("Failed to load article");
+        }
+      };
+
+      fetchArticle();
+    }
+  }, [id, isEditMode, user.id]);
 
   const toggleTag = (tag) => {
     setSelectedTags((prev) =>
@@ -196,61 +245,57 @@ export const ArticleEditorPage = () => {
       uploadedImageData,
     });
 
-     try {
+    try {
+      // Determine if we should update the publish status
+      const published = publishStatus !== null ? publishStatus : isPublished;
 
+      // Get the current image state, preferring newly uploaded image if available
+      const currentImageUrl = uploadedImageData?.url || featuredImageUrl;
+      const currentImagePath = uploadedImageData?.path || imagePath;
 
-            // Determine if we should update the publish status
-            const published = publishStatus !== null ? publishStatus : isPublished
+      console.log("Current image state:", {
+        featuredImageUrl: currentImageUrl,
+        imagePath: currentImagePath,
+        selectedImage,
+        uploadedImageData,
+      });
 
-            // Get the current image state, preferring newly uploaded image if available
-            const currentImageUrl = uploadedImageData?.url || featuredImageUrl
-            const currentImagePath = uploadedImageData?.path || imagePath
+      // featured_image
 
+      const articleData = {
+        title,
+        content,
+        tags: selectedTags,
+        authorId: user.id,
+        published,
+        featured_imageUrl: currentImageUrl,
+      };
 
-            console.log('Current image state:', {
-                featuredImageUrl: currentImageUrl,
-                imagePath: currentImagePath,
-                selectedImage,
-                uploadedImageData
-            })
+      console.log("Saving article with data:", articleData);
 
-            // featured_image   
+      let savedArticle;
 
-            const articleData = {
-                title,
-                content,
-                tags: selectedTags,
-                authorId: user.id,
-                published,
-               featured_imageUrl: currentImageUrl
-            }
+      // update
 
-            console.log('Saving article with data:', articleData);
+      if (isEditMode) {
+        // update functions
+        savedArticle = await updateArticle(id, articleData);
+      } else {
+        // insert || create new article
+        savedArticle = await createArticle(articleData);
+      }
 
-            let savedArticle;
+      console.log("Article saved successfully:", savedArticle);
 
-
-            // update 
-
-            if (isEditMode) {
-                // update functions
-                savedArticle = await updateArticle(id, articleData)
-            } else {
-                // insert || create new article
-                savedArticle = await createArticle(articleData)
-            }
-
-
-            console.log('Article saved successfully:', savedArticle)
-
-            toast.success(`Article ${isEditMode ? 'updated' : 'created'} successfully!`)
-
-        } catch (error) {
-            console.error('Error saving article:', error)
-            toast.error('Failed to save your article. Please try again later.')
-        } finally {
-            setIsSaving(false)
-        }
+      toast.success(
+        `Article ${isEditMode ? "updated" : "created"} successfully!`
+      );
+    } catch (error) {
+      console.error("Error saving article:", error);
+      toast.error("Failed to save your article. Please try again later.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -268,12 +313,12 @@ export const ArticleEditorPage = () => {
 
           <button className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
             <FiSave className="inline mr-2" />
-            save As Draft
+            {isEditMode ? "Update Draft" : "Save As Draft"}
           </button>
 
           <button className="px-4 py-2 border border-transparent rounded-md shadow-sm text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
             <FiSave className="inline mr-2" />
-            Save and Publish
+            {isEditMode ? "Update and Publish " : "Save and Publish"}
           </button>
         </div>
       </div>
@@ -445,14 +490,14 @@ export const ArticleEditorPage = () => {
       </div>
       <div className="px-6 py-4 md:px-10 flex justify-end space-x-4">
         <button className="px-6 py-3 border border-gray-300 rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
-          Save as Draft
+          {isEditMode ? "Update as Draft" : "Save as Draft"}
         </button>
 
         <button
           onClick={() => handleSave(true)}
           className="px-6 py-3 border border-transparent rounded-md shadow-sm text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
         >
-          Save and Publish
+          {isEditMode ? "Update and Publish" : "Save and Publish"}
         </button>
       </div>
     </div>

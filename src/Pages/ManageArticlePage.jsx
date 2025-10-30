@@ -2,8 +2,8 @@ import { Link, useNavigate } from "react-router";
 import { useAuth } from "../Context/AuthContext";
 import { useEffect, useOptimistic, useState, useTransition } from "react";
 import toast from "react-hot-toast";
-import { getArticleByAuthor } from "../lib/articles";
-import { FiEdit2, FiEye, FiPlus, FiTrash2 } from "react-icons/fi";
+import { deleteArticle, getArticleByAuthor } from "../lib/articles";
+import { FiEdit2, FiEye, FiLoader, FiPlus, FiTrash2 } from "react-icons/fi";
 
 export const ManageArticlePage = () => {
   const { user } = useAuth();
@@ -72,6 +72,39 @@ export const ManageArticlePage = () => {
   const draftArticles = optimisticArticles.filter(
     (article) => !article.published
   );
+
+  const handleDelete = async () => {
+    if (!articleToDelete) return;
+
+    try {
+      setIsDeleting(true);
+      console.log("Starting deletion process for article:", articleToDelete.id);
+
+      // Wrap the optimistic update in a transition
+
+      startTransition(() => updateOptimisticArticles(articleToDelete.id));
+
+      const result = await deleteArticle(articleToDelete.id);
+
+      setArticles((prevArticles) =>
+        prevArticles.filter((article) => article.id !== articleToDelete.id)
+      );
+      setTotalCount((prevCount) => prevCount - 1);
+
+      setArticleToDelete(null);
+    } catch (error) {
+      console.error("Error deleting article in component:", error);
+      console.error("Error details:", JSON.stringify(error, null, 2));
+      toast.error(
+        `Failed to delete article: ${error.message || "Unknown error"}`
+      );
+
+      // Fetch articles again to restore state in case optimistic update was applied
+      fetchUserArticles();
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-orange-50 to-white pb-12">
@@ -264,7 +297,7 @@ export const ManageArticlePage = () => {
               </button>
 
               <button
-                // onClick={handleDelete}
+                onClick={handleDelete}
                 // disabled={isDeleting}
                 className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200 flex items-center"
               >
