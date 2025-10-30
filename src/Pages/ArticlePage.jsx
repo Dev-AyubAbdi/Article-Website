@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router";
 import { useAuth } from "../Context/AuthContext";
 import { getArticleById } from "../lib/articles";
 import { FiCalendar } from "react-icons/fi";
+import { CommentSection } from "../Components/CommentSection";
 
 export const ArticlePage = () => {
   const { id } = useParams();
@@ -154,9 +155,9 @@ export const ArticlePage = () => {
         {/* Comments Section */}
         <div className="max-w-4xl mx-auto mt-8 mb-12">
           <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-            {/* <div className="px-6 md:px-12 py-8">
+            <div className="px-6 md:px-12 py-8">
               <CommentSection articleId={id} />
-            </div> */}
+            </div>
           </div>
         </div>
       </div>
