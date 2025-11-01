@@ -4,6 +4,7 @@ import { FiEdit2, FiMessageSquare, FiSend, FiTrash2 } from "react-icons/fi";
 import toast from "react-hot-toast";
 import supabase from "../lib/supabase";
 import { formatDistanceToNow } from "date-fns";
+import { Link } from "react-router";
 
 export const CommentSection = ({ articleId }) => {
   const { user, profile } = useAuth();
@@ -15,9 +16,110 @@ export const CommentSection = ({ articleId }) => {
   const [editText, setEditText] = useState("");
   const commentInputRef = useRef(null);
 
-  useEffect(()=> {
-    fetchComments()
-  },[articleId])
+  useEffect(() => {
+    fetchComments();
+
+    const verifySupabaseRealTime = async () => {
+      try {
+        const channels = supabase.channel();
+
+        console.log("Current active channels", channels.length);
+
+        // check database connection
+
+        const { error, data } = await supabase
+          .from("comments")
+          .select("count")
+          .eq("article_id", articleId);
+
+        if (error) {
+          console.error("Error connecting to Supabase:", error);
+        } else {
+          console.log(
+            "Connected to Supabase successfully, comment count:",
+            data
+          );
+        }
+      } catch (error) {
+        console.error("Error verifying Supabase configuration:", error);
+      }
+    };
+    verifySupabaseRealTime();
+
+    supabase.getChannels().forEach((channel) => {
+      console.log("found channel", channel.topic);
+      supabase.removeChannel(channel);
+    });
+
+    const commentChannel = supabase
+      .channel("comments-" + articleId)
+      // listen to insert
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "comments",
+          filter: `article_id=eq.${articleId}`,
+        },
+        (peyload) => {
+          console.log("insert event recived:", peyload);
+          fetchComments();
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "DELETE",
+          schema: "public",
+          table: "comments",
+        },
+        (payload) => {
+          console.log("DELETE event without filter received:", payload);
+          console.log("UNFILTERED DELETE payload.old:", payload.old);
+
+          if (payload.old && payload.old.id) {
+            setComments((current) => {
+              // check if teh comment exists
+              const commentExists = current.some(
+                (comment) => comment.id === payload.old.id
+              );
+
+              if (commentExists) {
+                console.log(
+                  "UNFILTERED: Removing deleted comment with ID:",
+                  payload.old.id
+                );
+                const filteredComments = current.filter(
+                  (comment) => comment.id !== payload.old.id
+                );
+                console.log(
+                  `UNFILTERED: Comments before: ${current.length}, after: ${filteredComments.length}`
+                );
+                return filteredComments;
+              } else {
+                console.log(
+                  "UNFILTERED: Comment ID not found in current state:",
+                  payload.old.id
+                );
+                return current;
+              }
+            });
+          } else {
+            console.log("UNFILTERED: No ID in payload:", payload);
+          }
+        }
+      )
+
+      .subscribe((status) => {
+        console.log("subscription status", status);
+      });
+
+    return () => {
+      console.log("clear up channel subscription ");
+      supabase.removeChannel(commentChannel);
+    };
+  }, [articleId]);
 
   const fetchComments = async () => {
     try {
@@ -73,6 +175,39 @@ export const CommentSection = ({ articleId }) => {
     } catch (error) {
       console.error("Error posting comment:", error);
       toast.error("Failed to post comment");
+    }
+  };
+
+  const handleDelete = async (commentId) => {
+    if (!window.confirm("Are You Sure you want to delete this comment")) return;
+
+    try {
+      setComments((current) => {
+        const filteredComments = current.filter(
+          (comment) => comment.id !== commentId
+        );
+        return filteredComments;
+      });
+      const { error, count, data } = await supabase
+        .from("comments")
+        .delete()
+        .eq("id", commentId)
+        .select();
+
+      if (error) {
+        console.error("Error deleting comment:", error);
+        throw error;
+      }
+
+      console.log("Comment deleted successfully from database:", {
+        count,
+        data,
+      });
+      console.log("========= COMMENT DELETION COMPLETE =========");
+    } catch (error) {
+      console.error("Error deleting comment:", error);
+      toast.error("Failed to delete comment");
+      fetchComments();
     }
   };
 
