@@ -46,7 +46,7 @@ export const ArticleEditorPage = () => {
 
   const { user } = useAuth();
 
-  const Navigate = useNavigate();
+  const navigate  = useNavigate();
 
   const fileInputRef = useRef(null);
   const editorRef = useRef(null);
@@ -145,7 +145,7 @@ export const ArticleEditorPage = () => {
 
     if (!user) {
       toast.error("you must be signed in to upload image");
-      Navigate("/singin");
+      navigate ("/signin")
       return;
     }
     setIsUploading(true);
