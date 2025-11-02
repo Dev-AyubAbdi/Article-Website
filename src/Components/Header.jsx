@@ -140,9 +140,9 @@ export const Header = () => {
                 className="inline-flex items-center justify-center p-2 rounded-md text-gray-400"
               >
                 {isMenuOpen ? (
-                  <CiMenuBurger className="block w-6 h-6" />
+                   <IoMdClose className="block w-6 h-6" />
                 ) : (
-                  <IoMdClose className="block w-6 h-6" />
+                  <CiMenuBurger className="block w-6 h-6" />
                 )}
               </button>
             </div>

@@ -109,7 +109,17 @@ export const CommentSection = ({ articleId }) => {
             console.log("UNFILTERED: No ID in payload:", payload);
           }
         }
-      )
+      ) .on('postgres_changes', {
+                event: "UPDATE",
+                schema: "public",
+                table: "comments",
+                filter: `article_id=eq.${articleId}`
+            },
+
+                payload => {
+                    console.log("Update event received: ", payload)
+                    fetchComments();
+                })
 
       .subscribe((status) => {
         console.log("subscription status", status);
@@ -178,6 +188,35 @@ export const CommentSection = ({ articleId }) => {
     }
   };
 
+  const handleEdit = (comment) => {
+
+    setEditingId(comment.id);
+    setEditText(comment.content)
+
+
+  }
+
+  const handleUpdate = async () => {
+     if (!editText.trim()) return
+
+        try {
+
+            // Exit edit mode immediately
+            const commentId = editingId;
+            const content = editText.trim();
+            setEditingId(null);
+
+            await supabase.from('comments')
+                .update({ content })
+                .eq('id', commentId)
+
+            // let real time handle the update
+        } catch (error) {
+            console.error('Error updating comment:', error);
+            toast.error('Failed to update comment');
+        }
+  }
+
   const handleDelete = async (commentId) => {
     if (!window.confirm("Are You Sure you want to delete this comment")) return;
 
@@ -210,6 +249,8 @@ export const CommentSection = ({ articleId }) => {
       fetchComments();
     }
   };
+
+  
 
   return (
     <div className="mt-10 bg-white p-5 rounded-lg border border-gray-200">
