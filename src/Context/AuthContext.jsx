@@ -12,6 +12,7 @@ export function AuthProvider({ children }) {
 
 
   useEffect(() => {
+    
     const cleanup = onAuthChange(async (user) => {
       setUser(user);
 
