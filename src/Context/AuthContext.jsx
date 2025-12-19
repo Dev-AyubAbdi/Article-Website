@@ -35,7 +35,7 @@ export function AuthProvider({ children }) {
     try {
       await signOut()
     } catch (error) {
-      console.error("error sign in out ", error)
+      console.error("error signing out ", error)
     }
   }
 
@@ -58,7 +58,7 @@ export function useAuth() {
   const context = useContext(AuthContext);
 
   if (context === null) {
-    throw new error("useAuth must be used within authprovider");
+    throw new Error("useAuth must be used within authprovider");
   }
   return context;
 }
